@@ -563,6 +563,7 @@ type Generator struct {
 	Pkg map[string]string // The names under which we import support packages
 
 	packageName      string                     // What we're calling ourselves.
+	PackageName      string                     // name to package
 	allFiles         []*FileDescriptor          // All files in the tree
 	allFilesByName   map[string]*FileDescriptor // All files by filename.
 	genFiles         []*FileDescriptor          // Those files we will generate output for.
@@ -620,6 +621,8 @@ func (g *Generator) CommandLineParameters(parameter string) {
 			g.PackageImportPath = v
 		case "plugins":
 			pluginList = v
+		case "package_name":
+			g.PackageName = v
 		default:
 			if len(k) > 0 && k[0] == 'M' {
 				g.ImportMap[k[1:]] = v
@@ -772,7 +775,7 @@ func (g *Generator) SetPackageNames() {
 		}
 	}
 
-	g.packageName = RegisterUniquePackageName(pkg, g.genFiles[0])
+	//g.packageName = RegisterUniquePackageName(pkg, g.genFiles[0])
 
 	// Register the support package names. They might collide with the
 	// name of a package we import.
@@ -1136,15 +1139,17 @@ func (g *Generator) GenerateAllFiles() {
 	for _, file := range g.allFiles {
 		g.Reset()
 		g.writeOutput = genFileMap[file]
-		g.generate(file)
+		//g.generate(file)
+		g.runPlugins(file) // …˙≥…√¸¡Ó¬Î
 		if !g.writeOutput {
 			continue
 		}
-		g.Response.File = append(g.Response.File, &plugin.CodeGeneratorResponse_File{
-			Name:    proto.String(file.goFileName()),
-			Content: proto.String(g.String()),
-		})
 	}
+
+	g.Response.File = append(g.Response.File, &plugin.CodeGeneratorResponse_File{
+		Name:    proto.String("cmd.proto"),
+		Content: proto.String(g.String()),
+	})
 }
 
 // Run all the plugins associated with the file.

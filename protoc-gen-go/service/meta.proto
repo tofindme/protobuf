@@ -1,0 +1,119 @@
+// Copyright 2017 <chaishushan{AT}gmail.com>. All rights reserved.
+// Use of this source code is governed by a Apache
+// license that can be found in the LICENSE file.
+
+syntax = "proto2";
+
+option go_package = "meta";
+
+import "google/protobuf/descriptor.proto";
+
+// ----------------------------------------------------------------------------
+// proto 注解
+// ----------------------------------------------------------------------------
+
+extend google.protobuf.FileOptions {
+	optional FileOption file_option = 50001;
+}
+
+extend google.protobuf.ServiceOptions {
+	optional ServiceOption service_option = 50002;
+}
+
+extend google.protobuf.MethodOptions {
+	optional MethodOption method_option = 50003;
+}
+
+extend google.protobuf.MessageOptions {
+	optional MessageOption message_option = 50004;
+}
+
+extend google.protobuf.FieldOptions {
+	optional FieldOption field_option = 50005;
+}
+
+// ----------------------------------------------------------------------------
+// Spec 用语渲染生成代码的模板
+// 为了兼容 proto2 和 proto3 语法, 建议采用 msg.GetFieldName() 方式渲染模板
+//
+// 只针对 service 部分, 因此 message 的很多信息并未包含
+// message 的合法性验证由运行时负责, 这里只有修饰信息
+// ----------------------------------------------------------------------------
+
+// proto 文件信息
+message FileSpec {
+	required string file_name = 1;
+	required string package_name = 2;
+	optional ExternalDocumentation external_docs = 3;
+}
+
+// 服务信息
+message ServiceSpec {
+	required string service_name = 1;
+	repeated ServiceMethodSpec method_list = 2;
+	optional ExternalDocumentation external_docs = 3;
+}
+
+// 服务方法列表
+message ServiceMethodSpec {
+	required string method_name = 1;
+	required string input_type_name = 2;
+	required string output_type_name = 3;
+	optional string http_method = 4 [default = "GET"];
+	optional ExternalDocumentation external_docs = 5;
+}
+
+// message 部分由标准的 protoc 插件生成代码
+// 生成服务时不需要 message 相关信息
+
+// ----------------------------------------------------------------------------
+// 扩展信息
+// ----------------------------------------------------------------------------
+
+// 文件的扩展信息
+message FileOption {
+	optional ExternalDocumentation external_docs = 1;
+}
+
+// 服务的扩展信息
+message ServiceOption {
+	optional ExternalDocumentation external_docs = 3;
+}
+
+// 服务方法的扩展信息
+message MethodOption {
+	optional uint32 id = 1;
+	optional ExternalDocumentation external_docs = 2;
+}
+
+// 消息的扩展信息
+message MessageOption {
+	optional ExternalDocumentation external_docs = 1;
+}
+
+// 消息成员的扩展信息
+// 这是重要信息, 在运行时可动态获取改信息对 message 做合法性验证
+message FieldOption {
+	optional double min_value = 1;
+	optional double max_value = 2;
+	optional double multiple_of_value = 3;
+	optional double exclusive_min_value = 4;
+	optional double exclusive_max_value = 5;
+	optional int32 min_length = 6;
+	optional int32 max_length = 7;
+	optional string regexp_value = 8;
+	repeated string enum_value = 9;
+	optional ExternalDocumentation external_docs = 10;
+	optional string struct_tag = 11;
+}
+
+// 扩展文档
+message ExternalDocumentation {
+	optional string title = 1;
+	optional string description = 2;
+	optional string url = 3;
+}
+
+// ----------------------------------------------------------------------------
+// END
+// ----------------------------------------------------------------------------
